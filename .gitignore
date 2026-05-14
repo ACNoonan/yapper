@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Swift / SPM
+KokoroSpeak/.build/
+KokoroSpeak/.swiftpm/
+KokoroSpeak/KokoroSpeak.app/
+
+# macOS
+.DS_Store
+
+# Logs (we point launchd here in the README)
+*.log

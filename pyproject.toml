@@ -1,0 +1,13 @@
+[project]
+name = "kokoro-tts-server"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.136.1",
+    "kokoro>=0.9.4",
+    "numpy>=2.4.4",
+    "soundfile>=0.13.1",
+    "torch>=2.12.0",
+    "uvicorn[standard]>=0.46.0",
+]
