@@ -1,5 +1,13 @@
 # Yapper — TTS on a hotkey
 
+> Highlight text anywhere, press a hotkey, and hear it read aloud — locally, on your Mac.
+
+<!--
+DEMO GIF — record a ~10s clip (highlight a sentence → press ⌃⇧S → the menu-bar 🔊
+plays it back), save it as assets/demo.gif, then uncomment the line below:
+![Yapper in action](assets/demo.gif)
+-->
+
 Local [Kokoro-82M](https://github.com/hexgrad/kokoro) TTS server + a tiny native macOS menubar app that speaks your selected text when you hit a hotkey. Apple Silicon only.
 
 Spiritual mirror image of [kitlangton/Hex](https://github.com/kitlangton/Hex) — that app does voice → text on a hotkey, this one does text → voice. The two compose nicely: dictate prompts into your editor with Hex, listen to responses back with Yapper.
