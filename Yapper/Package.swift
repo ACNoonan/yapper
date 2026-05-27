@@ -2,17 +2,17 @@
 import PackageDescription
 
 let package = Package(
-    name: "KokoroSpeak",
+    name: "Yapper",
     platforms: [.macOS(.v14)],
     products: [
-        .executable(name: "KokoroSpeak", targets: ["KokoroSpeak"]),
+        .executable(name: "Yapper", targets: ["Yapper"]),
     ],
     dependencies: [
         .package(url: "https://github.com/sindresorhus/KeyboardShortcuts", from: "2.0.0"),
     ],
     targets: [
         .executableTarget(
-            name: "KokoroSpeak",
+            name: "Yapper",
             dependencies: [
                 .product(name: "KeyboardShortcuts", package: "KeyboardShortcuts"),
             ]

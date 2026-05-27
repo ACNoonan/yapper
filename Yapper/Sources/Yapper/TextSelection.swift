@@ -7,14 +7,14 @@ enum TextSelection {
     static func grab() -> String? {
         let trusted = AXIsProcessTrusted()
         let frontApp = NSWorkspace.shared.frontmostApplication?.localizedName ?? "?"
-        fputs("KokoroSpeak: grab — AX trusted=\(trusted), frontmost=\(frontApp)\n", stderr)
+        fputs("Yapper: grab — AX trusted=\(trusted), frontmost=\(frontApp)\n", stderr)
         if let text = axSelectedText(), !text.isEmpty {
-            fputs("KokoroSpeak: AX selection \(text.count) chars\n", stderr)
+            fputs("Yapper: AX selection \(text.count) chars\n", stderr)
             return text
         }
-        fputs("KokoroSpeak: AX returned nothing — trying Cmd+C\n", stderr)
+        fputs("Yapper: AX returned nothing — trying Cmd+C\n", stderr)
         let text = clipboardSelectedText()
-        fputs("KokoroSpeak: clipboard path returned \(text?.count ?? 0) chars\n", stderr)
+        fputs("Yapper: clipboard path returned \(text?.count ?? 0) chars\n", stderr)
         return text
     }
 
@@ -33,7 +33,7 @@ enum TextSelection {
         let pb = NSPasteboard.general
         let previous = pb.string(forType: .string)
         let beforeCount = pb.changeCount
-        fputs("KokoroSpeak: pasteboard changeCount before Cmd+C = \(beforeCount)\n", stderr)
+        fputs("Yapper: pasteboard changeCount before Cmd+C = \(beforeCount)\n", stderr)
 
         synthesizeCmdC()
 
@@ -43,7 +43,7 @@ enum TextSelection {
         }
 
         let afterCount = pb.changeCount
-        fputs("KokoroSpeak: pasteboard changeCount after wait = \(afterCount)\n", stderr)
+        fputs("Yapper: pasteboard changeCount after wait = \(afterCount)\n", stderr)
         if afterCount == beforeCount {
             return nil
         }

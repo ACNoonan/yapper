@@ -1,4 +1,4 @@
-"""Kokoro TTS HTTP server.
+"""Yapper TTS HTTP server.
 
 Loads a KPipeline at startup so the first request is fast. Exposes:
 
@@ -14,6 +14,7 @@ from __future__ import annotations
 import io
 import logging
 import os
+import re
 import struct
 from collections import OrderedDict
 from contextlib import asynccontextmanager
@@ -29,17 +30,34 @@ from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel, Field
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-log = logging.getLogger("kokoro-server")
+log = logging.getLogger("yapper-server")
 
 SAMPLE_RATE = 24_000
-DEFAULT_LANG = os.environ.get("KOKORO_LANG", "a")
-DEFAULT_VOICE = os.environ.get("KOKORO_VOICE", "af_heart")
-CACHE_MAX_ENTRIES = int(os.environ.get("KOKORO_CACHE_ENTRIES", "64"))
+DEFAULT_LANG = os.environ.get("YAPPER_LANG", "a")
+DEFAULT_VOICE = os.environ.get("YAPPER_VOICE", "af_heart")
+CACHE_MAX_ENTRIES = int(os.environ.get("YAPPER_CACHE_ENTRIES", "64"))
 
-# Split on sentence-ending punctuation OR newlines so each pipeline chunk stays
-# under Kokoro's ~30s-per-utterance ceiling and the stream endpoint flushes
-# audio every sentence (low first-audio latency on long passages).
+# Split on sentence-ending punctuation OR paragraph breaks so each pipeline
+# chunk stays under Kokoro's ~30s-per-utterance ceiling and the stream endpoint
+# flushes audio every sentence (low first-audio latency on long passages).
+# Note: lone newlines are collapsed to spaces in normalize_text() *before* this
+# runs, so only genuine paragraph breaks reach the splitter as newlines.
 SPLIT_PATTERN = r"(?<=[.!?])\s+|\n+"
+
+# Hard-wrapped source (e.g. an IDE) breaks lines mid-sentence. A lone newline
+# there is not a sentence end, so collapse it to a space — otherwise Kokoro
+# synthesizes each wrapped line as its own utterance and tacks on a
+# sentence-final pause + falling intonation, which sounds wrong and adds delay.
+# Blank lines (one or more) are kept as a single paragraph break.
+_PARAGRAPH_BREAK = re.compile(r"\n[ \t]*\n[ \t\n]*")
+_LONE_NEWLINE = re.compile(r"[ \t]*\n[ \t]*")
+
+
+def normalize_text(text: str) -> str:
+    """Join hard-wrapped lines; preserve blank-line paragraph breaks."""
+    paragraphs = _PARAGRAPH_BREAK.split(text)
+    joined = [_LONE_NEWLINE.sub(" ", p).strip() for p in paragraphs]
+    return "\n".join(p for p in joined if p)
 
 AMERICAN_ENGLISH_VOICES = [
     "af_heart", "af_bella", "af_nicole", "af_sarah", "af_sky",
@@ -93,6 +111,7 @@ def _audio_to_wav(audio: np.ndarray) -> bytes:
 
 def synth_audio_chunks(text: str, voice: str, speed: float, lang_code: str) -> Iterator[np.ndarray]:
     """Yield one int16 numpy array per Kokoro chunk. Cache-aware."""
+    text = normalize_text(text)
     key = _cache_key(text, voice, speed, lang_code)
     cached = _cache_get(key)
     if cached is not None:
@@ -121,7 +140,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="Kokoro TTS", lifespan=lifespan)
+app = FastAPI(title="Yapper TTS", lifespan=lifespan)
 
 
 class SpeakRequest(BaseModel):
@@ -180,7 +199,7 @@ if __name__ == "__main__":
     uvicorn.run(
         "server:app",
         host="127.0.0.1",
-        port=int(os.environ.get("KOKORO_PORT", "8765")),
+        port=int(os.environ.get("YAPPER_PORT", "8765")),
         log_level="info",
         reload=False,
     )

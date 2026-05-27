@@ -8,7 +8,7 @@ extension KeyboardShortcuts.Name {
 }
 
 @main
-struct KokoroSpeakApp: App {
+struct YapperApp: App {
     @StateObject private var state = AppState()
 
     var body: some Scene {
@@ -19,7 +19,7 @@ struct KokoroSpeakApp: App {
         }
         .menuBarExtraStyle(.menu)
 
-        Window("KokoroSpeak Settings", id: "settings") {
+        Window("Yapper Settings", id: "settings") {
             SettingsView(state: state)
         }
         .windowResizability(.contentSize)
@@ -60,6 +60,6 @@ struct MenuView: View {
         .keyboardShortcut(",", modifiers: .command)
 
         Button("Open accessibility settings") { state.openAccessibilitySettings() }
-        Button("Quit KokoroSpeak") { NSApplication.shared.terminate(nil) }
+        Button("Quit Yapper") { NSApplication.shared.terminate(nil) }
     }
 }

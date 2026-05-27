@@ -54,7 +54,7 @@ final class AppState: ObservableObject {
 
     private func doSpeakFromSelection() {
         let text = TextSelection.grab() ?? ""
-        fputs("KokoroSpeak: grab returned \(text.count) chars\n", stderr)
+        fputs("Yapper: grab returned \(text.count) chars\n", stderr)
         guard !text.isEmpty else {
             statusText = "No selection"
             notify(title: "Nothing to speak", body: "Highlight some text first, then trigger again.")
@@ -114,7 +114,7 @@ final class AppState: ObservableObject {
                     self.isSpeaking = false
                     if let e = caught, !(e is CancellationError) {
                         let msg = e.localizedDescription
-                        fputs("KokoroSpeak: error — \(msg)\n", stderr)
+                        fputs("Yapper: error — \(msg)\n", stderr)
                         self.statusText = "Error: \(msg)"
                         self.notify(title: "TTS failed", body: msg)
                     } else {

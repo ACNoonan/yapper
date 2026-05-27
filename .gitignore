@@ -10,9 +10,9 @@ wheels/
 .venv
 
 # Swift / SPM
-KokoroSpeak/.build/
-KokoroSpeak/.swiftpm/
-KokoroSpeak/KokoroSpeak.app/
+Yapper/.build/
+Yapper/.swiftpm/
+Yapper/*.app/
 
 # macOS
 .DS_Store

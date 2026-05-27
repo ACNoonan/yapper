@@ -2,7 +2,7 @@ import Foundation
 import AVFoundation
 
 struct SpeechClient {
-    private let baseURL = URL(string: ProcessInfo.processInfo.environment["KOKORO_URL"] ?? "http://127.0.0.1:8765")!
+    private let baseURL = URL(string: ProcessInfo.processInfo.environment["YAPPER_URL"] ?? "http://127.0.0.1:8765")!
 
     /// Streams sentence-level WAV chunks from `/speak_stream` as Kokoro
     /// produces them. The async sequence yields one complete WAV per chunk;
@@ -27,7 +27,7 @@ struct SpeechClient {
                     let (bytes, resp) = try await URLSession.shared.bytes(for: req)
                     guard let http = resp as? HTTPURLResponse, http.statusCode == 200 else {
                         let code = (resp as? HTTPURLResponse)?.statusCode ?? 0
-                        throw NSError(domain: "KokoroSpeak", code: 1,
+                        throw NSError(domain: "Yapper", code: 1,
                                       userInfo: [NSLocalizedDescriptionKey: "Server status \(code)"])
                     }
 
@@ -40,7 +40,7 @@ struct SpeechClient {
                         }
                         if length == 0 { break }
                         guard let wav = try await reader.readExact(Int(length)) else {
-                            throw NSError(domain: "KokoroSpeak", code: 4,
+                            throw NSError(domain: "Yapper", code: 4,
                                           userInfo: [NSLocalizedDescriptionKey: "Stream truncated mid-frame"])
                         }
                         continuation.yield(wav)
@@ -101,7 +101,7 @@ actor StreamPlayer {
             pending.append(instance)
             pumpIfIdle()
         } catch {
-            fputs("KokoroSpeak: failed to init player for chunk (\(data.count) bytes): \(error)\n", stderr)
+            fputs("Yapper: failed to init player for chunk (\(data.count) bytes): \(error)\n", stderr)
         }
     }
 
@@ -167,7 +167,7 @@ private final class PlayerInstance: NSObject, AVAudioPlayerDelegate, @unchecked 
     func start(onFinish: @escaping @Sendable () -> Void) {
         self.onFinish = onFinish
         if !player.play() {
-            fputs("KokoroSpeak: AVAudioPlayer.play() returned false\n", stderr)
+            fputs("Yapper: AVAudioPlayer.play() returned false\n", stderr)
             fireFinish()
         }
     }
@@ -188,7 +188,7 @@ private final class PlayerInstance: NSObject, AVAudioPlayerDelegate, @unchecked 
     }
 
     func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) {
-        fputs("KokoroSpeak: decode error: \(error?.localizedDescription ?? "?")\n", stderr)
+        fputs("Yapper: decode error: \(error?.localizedDescription ?? "?")\n", stderr)
         fireFinish()
     }
 }

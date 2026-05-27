@@ -1,14 +1,14 @@
-# Kokoro Speak — TTS on a hotkey
+# Yapper — TTS on a hotkey
 
 Local [Kokoro-82M](https://github.com/hexgrad/kokoro) TTS server + a tiny native macOS menubar app that speaks your selected text when you hit a hotkey. Apple Silicon only.
 
-Spiritual mirror image of [kitlangton/Hex](https://github.com/kitlangton/Hex) — that app does voice → text on a hotkey, this one does text → voice. The two compose nicely: dictate prompts into your editor with Hex, listen to responses back with Kokoro Speak.
+Spiritual mirror image of [kitlangton/Hex](https://github.com/kitlangton/Hex) — that app does voice → text on a hotkey, this one does text → voice. The two compose nicely: dictate prompts into your editor with Hex, listen to responses back with Yapper.
 
 ## Pieces
 
 - `server.py` — FastAPI HTTP server wrapping `kokoro` (KPipeline). Preloads the model at startup. Exposes `POST /speak` (one WAV for the whole clip) and `POST /speak_stream` (length-prefixed WAV frames per sentence, for low first-audio latency). Both share an LRU cache.
-- `LaunchAgents/com.example.kokoro.plist` — template launchd agent that keeps the server alive at login. Install it into `~/Library/LaunchAgents/`.
-- `KokoroSpeak/` — Swift Package menubar app. Global hotkey → grab selection (accessibility API, with Cmd+C fallback) → POST to server → play WAV via `AVAudioPlayer`.
+- `LaunchAgents/com.example.yapper.plist` — template launchd agent that keeps the server alive at login. Install it into `~/Library/LaunchAgents/`.
+- `Yapper/` — Swift Package menubar app. Global hotkey → grab selection (accessibility API, with Cmd+C fallback) → POST to server → play WAV via `AVAudioPlayer`.
 
 ## Default hotkeys
 
@@ -32,29 +32,29 @@ uv sync          # creates .venv, installs from uv.lock
 uv run python server.py    # then: curl http://127.0.0.1:8765/health
 
 # 4. Build the menubar app
-cd KokoroSpeak && ./build.sh && open KokoroSpeak.app
+cd Yapper && ./build.sh && open Yapper.app
 
 # 5. Run server at login via launchd
-cp LaunchAgents/com.example.kokoro.plist ~/Library/LaunchAgents/
+cp LaunchAgents/com.example.yapper.plist ~/Library/LaunchAgents/
 # Edit the plist: replace every __REPLACE__ with your $HOME (e.g. /Users/you)
-launchctl bootstrap "gui/$(id -u)" ~/Library/LaunchAgents/com.example.kokoro.plist
+launchctl bootstrap "gui/$(id -u)" ~/Library/LaunchAgents/com.example.yapper.plist
 ```
 
 ## Managing the launchd agent
 
 ```bash
 # Status
-launchctl print "gui/$(id -u)/com.example.kokoro" | grep state
+launchctl print "gui/$(id -u)/com.example.yapper" | grep state
 
 # Restart
-launchctl kickstart -k "gui/$(id -u)/com.example.kokoro"
+launchctl kickstart -k "gui/$(id -u)/com.example.yapper"
 
 # Stop / Start
-launchctl bootout  "gui/$(id -u)" ~/Library/LaunchAgents/com.example.kokoro.plist
-launchctl bootstrap "gui/$(id -u)" ~/Library/LaunchAgents/com.example.kokoro.plist
+launchctl bootout  "gui/$(id -u)" ~/Library/LaunchAgents/com.example.yapper.plist
+launchctl bootstrap "gui/$(id -u)" ~/Library/LaunchAgents/com.example.yapper.plist
 
 # Logs
-tail -f ~/Library/Logs/kokoro/server.out.log ~/Library/Logs/kokoro/server.err.log
+tail -f ~/Library/Logs/yapper/server.out.log ~/Library/Logs/yapper/server.err.log
 ```
 
 Quick sanity check:
@@ -69,18 +69,18 @@ curl -s -X POST http://127.0.0.1:8765/speak \
 ## Building the menubar app
 
 ```bash
-cd KokoroSpeak
+cd Yapper
 ./build.sh
-open KokoroSpeak.app
+open Yapper.app
 ```
 
 ### Stable code signing (optional but recommended)
 
-`build.sh` signs the app with a self-signed certificate named **`KokoroSpeak Local`** if it finds one in your login keychain, otherwise it falls back to ad-hoc signing. The difference matters: ad-hoc signatures change on every rebuild, so macOS treats each build as a new app and you have to re-grant Accessibility every time. A stable self-signed cert keeps the same code-signing identity across rebuilds, so the grant sticks.
+`build.sh` signs the app with a self-signed certificate named **`Yapper Local`** if it finds one in your login keychain, otherwise it falls back to ad-hoc signing. The difference matters: ad-hoc signatures change on every rebuild, so macOS treats each build as a new app and you have to re-grant Accessibility every time. A stable self-signed cert keeps the same code-signing identity across rebuilds, so the grant sticks.
 
 Create the cert once (Keychain Access → **Certificate Assistant → Create a Certificate…**):
 
-- **Name:** `KokoroSpeak Local`
+- **Name:** `Yapper Local`
 - **Identity Type:** Self Signed Root
 - **Certificate Type:** Code Signing
 
@@ -88,23 +88,23 @@ Leave it in the login keychain. `build.sh` will pick it up automatically on the 
 
 ### First-launch permissions
 
-KokoroSpeak needs **Accessibility** access to read selected text from the focused app and synthesize Cmd+C as a fallback.
+Yapper needs **Accessibility** access to read selected text from the focused app and synthesize Cmd+C as a fallback.
 
-1. Launch the app once (`open KokoroSpeak/KokoroSpeak.app`). A 🔊 icon should appear in the menu bar.
-2. macOS will prompt for Accessibility, or you can open: **System Settings → Privacy & Security → Accessibility** and enable **KokoroSpeak**.
+1. Launch the app once (`open Yapper/Yapper.app`). A 🔊 icon should appear in the menu bar.
+2. macOS will prompt for Accessibility, or you can open: **System Settings → Privacy & Security → Accessibility** and enable **Yapper**.
 3. Quit and relaunch the app after granting.
 4. Highlight text anywhere, hit `⌃⇧S`.
 
 ### Run at login
 
-Drag `KokoroSpeak.app` into **System Settings → General → Login Items → Open at Login**.
+Drag `Yapper.app` into **System Settings → General → Login Items → Open at Login**.
 
 ## Customizing
 
 - **Voice**: menubar → Voice. Defaults to `af_heart`. Other curated voices listed in the menu; many more exist on the [Kokoro model card](https://huggingface.co/hexgrad/Kokoro-82M).
 - **Speed**: menubar → Speed. Range 0.5–2.0.
 - **Hotkey**: menubar → **Settings…** → click the recorder field, press your combination.
-- **Server port**: set `KOKORO_PORT` in the launchd plist and the `KOKORO_URL` env var when launching the app.
+- **Server port**: set `YAPPER_PORT` in the launchd plist and the `YAPPER_URL` env var when launching the app.
 
 ## Known limitations
 

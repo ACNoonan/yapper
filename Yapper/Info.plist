@@ -5,13 +5,13 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>en</string>
     <key>CFBundleExecutable</key>
-    <string>KokoroSpeak</string>
+    <string>Yapper</string>
     <key>CFBundleIdentifier</key>
-    <string>com.adamnoonan.kokorospeak</string>
+    <string>com.adamnoonan.yapper</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
-    <string>KokoroSpeak</string>
+    <string>Yapper</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>

@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Build KokoroSpeak in release mode and wrap into a .app bundle.
+# Build Yapper in release mode and wrap into a .app bundle.
 set -euo pipefail
 
 cd "$(dirname "$0")"
 
-APP_NAME=KokoroSpeak
+APP_NAME=Yapper
 APP_DIR="./${APP_NAME}.app"
 CONFIG=release
 
@@ -21,10 +21,10 @@ cp "$BIN_PATH" "$APP_DIR/Contents/MacOS/$APP_NAME"
 cp Info.plist "$APP_DIR/Contents/Info.plist"
 
 echo "→ codesign with stable local identity"
-# Self-signed "KokoroSpeak Local" cert keeps the designated requirement stable
+# Self-signed "Yapper Local" cert keeps the designated requirement stable
 # across rebuilds, so macOS Accessibility grants survive. Falls back to ad-hoc
 # if the cert isn't present in the login keychain.
-SIGN_IDENTITY="KokoroSpeak Local"
+SIGN_IDENTITY="Yapper Local"
 if security find-certificate -c "$SIGN_IDENTITY" >/dev/null 2>&1; then
     codesign --force --deep --sign "$SIGN_IDENTITY" "$APP_DIR"
 else

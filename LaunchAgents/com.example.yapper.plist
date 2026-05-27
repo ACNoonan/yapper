@@ -1,39 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!--
-  Template launchd agent for the Kokoro TTS server.
+  Template launchd agent for the Yapper TTS server.
 
   Copy to ~/Library/LaunchAgents/, edit the four __REPLACE__ values for your
   home directory, then:
 
-    launchctl bootstrap "gui/$(id -u)" ~/Library/LaunchAgents/com.example.kokoro.plist
-    launchctl kickstart -k "gui/$(id -u)/com.example.kokoro"
+    launchctl bootstrap "gui/$(id -u)" ~/Library/LaunchAgents/com.example.yapper.plist
+    launchctl kickstart -k "gui/$(id -u)/com.example.yapper"
 
-  Logs: ~/Library/Logs/kokoro/
+  Logs: ~/Library/Logs/yapper/
 -->
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.example.kokoro</string>
+    <string>com.example.yapper</string>
 
     <key>ProgramArguments</key>
     <array>
         <string>__REPLACE__/.local/bin/uv</string>
         <string>run</string>
         <string>--directory</string>
-        <string>__REPLACE__/Documents/kokoro</string>
+        <string>__REPLACE__/Documents/yapper</string>
         <string>python</string>
         <string>server.py</string>
     </array>
 
     <key>WorkingDirectory</key>
-    <string>__REPLACE__/Documents/kokoro</string>
+    <string>__REPLACE__/Documents/yapper</string>
 
     <key>EnvironmentVariables</key>
     <dict>
         <key>PATH</key>
         <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
-        <key>KOKORO_PORT</key>
+        <key>YAPPER_PORT</key>
         <string>8765</string>
     </dict>
 
@@ -52,10 +52,10 @@
     <integer>10</integer>
 
     <key>StandardOutPath</key>
-    <string>__REPLACE__/Library/Logs/kokoro/server.out.log</string>
+    <string>__REPLACE__/Library/Logs/yapper/server.out.log</string>
 
     <key>StandardErrorPath</key>
-    <string>__REPLACE__/Library/Logs/kokoro/server.err.log</string>
+    <string>__REPLACE__/Library/Logs/yapper/server.err.log</string>
 
     <key>ProcessType</key>
     <string>Interactive</string>
