@@ -13,6 +13,7 @@ final class AppState: ObservableObject {
 
     private let speech = SpeechClient()
     private var currentTask: Task<Void, Never>?
+    private var currentPlayer: StreamPlayer?
 
     init() {
         if let v = UserDefaults.standard.string(forKey: "voice") { self.voice = v }
@@ -74,30 +75,51 @@ final class AppState: ObservableObject {
 
     func speak(_ text: String) {
         currentTask?.cancel()
+        if let prev = currentPlayer {
+            Task { await prev.stop() }
+        }
         isSpeaking = true
         statusText = "Synthesizing…"
         let voice = self.voice
         let speed = self.speed
+        let speech = self.speech
+        let player = StreamPlayer()
+        currentPlayer = player
+
         currentTask = Task { [weak self] in
+            var caught: Error?
             do {
-                let data = try await SpeechClient().synthesize(text: text, voice: voice, speed: speed)
-                if Task.isCancelled { return }
-                await MainActor.run { self?.statusText = "Speaking" }
-                try await SpeechClient.player.play(data: data)
-                await MainActor.run {
-                    self?.statusText = "Idle"
-                    self?.isSpeaking = false
-                    self?.currentTask = nil
+                var first = true
+                for try await chunk in speech.synthesizeStream(text: text, voice: voice, speed: speed) {
+                    try Task.checkCancellation()
+                    if first {
+                        first = false
+                        await MainActor.run { self?.statusText = "Speaking" }
+                    }
+                    await player.enqueue(chunk)
                 }
-            } catch is CancellationError {
-                // stopped on purpose
+                await player.markStreamEnd()
+                await player.waitUntilDone()
             } catch {
-                let msg = error.localizedDescription
-                fputs("KokoroSpeak: error — \(msg)\n", stderr)
-                await MainActor.run {
-                    self?.statusText = "Error: \(msg)"
-                    self?.isSpeaking = false
-                    self?.notify(title: "TTS failed", body: msg)
+                caught = error
+                await player.stop()
+            }
+
+            await MainActor.run {
+                guard let self else { return }
+                // Only clear if no newer speak() has taken over.
+                if self.currentPlayer === player {
+                    self.currentPlayer = nil
+                    self.currentTask = nil
+                    self.isSpeaking = false
+                    if let e = caught, !(e is CancellationError) {
+                        let msg = e.localizedDescription
+                        fputs("KokoroSpeak: error — \(msg)\n", stderr)
+                        self.statusText = "Error: \(msg)"
+                        self.notify(title: "TTS failed", body: msg)
+                    } else {
+                        self.statusText = "Idle"
+                    }
                 }
             }
         }
@@ -106,7 +128,10 @@ final class AppState: ObservableObject {
     func stop() {
         currentTask?.cancel()
         currentTask = nil
-        SpeechClient.player.stop()
+        if let p = currentPlayer {
+            Task { await p.stop() }
+        }
+        currentPlayer = nil
         isSpeaking = false
         statusText = "Idle"
     }
