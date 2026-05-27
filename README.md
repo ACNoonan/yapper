@@ -6,7 +6,7 @@ Spiritual mirror image of [kitlangton/Hex](https://github.com/kitlangton/Hex) �
 
 ## Pieces
 
-- `server.py` — FastAPI HTTP server wrapping `kokoro` (KPipeline). Preloads the model at startup, exposes `POST /speak`.
+- `server.py` — FastAPI HTTP server wrapping `kokoro` (KPipeline). Preloads the model at startup. Exposes `POST /speak` (one WAV for the whole clip) and `POST /speak_stream` (length-prefixed WAV frames per sentence, for low first-audio latency). Both share an LRU cache.
 - `LaunchAgents/com.example.kokoro.plist` — template launchd agent that keeps the server alive at login. Install it into `~/Library/LaunchAgents/`.
 - `KokoroSpeak/` — Swift Package menubar app. Global hotkey → grab selection (accessibility API, with Cmd+C fallback) → POST to server → play WAV via `AVAudioPlayer`.
 
@@ -74,6 +74,18 @@ cd KokoroSpeak
 open KokoroSpeak.app
 ```
 
+### Stable code signing (optional but recommended)
+
+`build.sh` signs the app with a self-signed certificate named **`KokoroSpeak Local`** if it finds one in your login keychain, otherwise it falls back to ad-hoc signing. The difference matters: ad-hoc signatures change on every rebuild, so macOS treats each build as a new app and you have to re-grant Accessibility every time. A stable self-signed cert keeps the same code-signing identity across rebuilds, so the grant sticks.
+
+Create the cert once (Keychain Access → **Certificate Assistant → Create a Certificate…**):
+
+- **Name:** `KokoroSpeak Local`
+- **Identity Type:** Self Signed Root
+- **Certificate Type:** Code Signing
+
+Leave it in the login keychain. `build.sh` will pick it up automatically on the next build. This cert is local-only — it does **not** make the app distributable to other machines (that needs an Apple Developer ID + notarization).
+
 ### First-launch permissions
 
 KokoroSpeak needs **Accessibility** access to read selected text from the focused app and synthesize Cmd+C as a fallback.
@@ -96,6 +108,6 @@ Drag `KokoroSpeak.app` into **System Settings → General → Login Items → Op
 
 ## Known limitations
 
-- Synthesizes the full clip before playback starts. For long passages this means a few seconds of "synthesizing..." before audio. Streaming chunk-by-chunk is a future improvement (Kokoro yields per-sentence, so we can pipe each chunk over a chunked response and feed AVAudioEngine).
+- The app streams sentence-by-sentence (`/speak_stream`): playback starts after the first sentence is synthesized and the rest plays back-to-back, so long passages don't wait for the full clip. The plain `/speak` endpoint (full clip in one WAV) is still available for scripting.
 - American English only by default. To enable other languages, install the extras (`pip install misaki[ja]` etc.) and pass `lang_code` in the request body.
 - Apple Silicon only (matches Hex).
